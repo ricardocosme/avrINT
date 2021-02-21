@@ -63,4 +63,4 @@ The command above should generate a binary ~a.out~ in the current directory. Not
 1. ~avr-gcc~ with at least ~-std=c++11~
 
 *** Contributions
-All type of contributions are welcome. If you like what you see and you have interest to help, don't hesitate to open a pull request or issue.
+Contributions are welcome, if you like what you see and you have interest to help, don't hesitate to open a PR(pull request), a issue or contact me through my email.
