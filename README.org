@@ -1,5 +1,5 @@
-** avrIO [[https://github.com/ricardocosme/avrIO/actions?query=workflow%3A%22avr-gcc+10.2%22][https://github.com/ricardocosme/avrINT/workflows/avr-gcc%2010.2/badge.svg?branch=main]]
-C++11/17 component to use the interrupt capabilities of AVR. It can be thought as a C++ version to the C headers ~avr/interrupt.h~ and ~util/atomic.h~ from ~avr-libc~. 
+** avrINT [[https://github.com/ricardocosme/avrINT/actions?query=workflow%3A%22avr-gcc+10.2%22][https://github.com/ricardocosme/avrINT/workflows/avr-gcc%2010.2/badge.svg?branch=main]]
+C++11/17 component to use the interrupt capabilities of AVR. It can be thought as a C++ version to the C headers [[http://svn.savannah.gnu.org/viewvc/avr-libc/tags/avr-libc-2_0_0-release/include/avr/interrupt.h?revision=2516&view=markup][avr/interrupt.h]] and [[http://svn.savannah.gnu.org/viewvc/avr-libc/tags/avr-libc-2_0_0-release/include/util/atomic.h?revision=2516&view=markup][util/atomic.h]] from [[https://www.nongnu.org/avr-libc/][AVR Libc]].[[file:WHY.org][(Why?)]]
 
 **** Demo
 
@@ -10,59 +10,57 @@ C++11/17 component to use the interrupt capabilities of AVR. It can be thought a
 
   int main() {
       on(); //enable the global interrupts
-
       off(); //disable the global interrupts
 
       { //scope with code executed without being disturbed by interrupts
           atomic sa;
+          //code
       } //global interrupts are always enabled in the end
 
       {
           atomic sa{restore};
-      } //global interrupts are enabled in the end if they were enabled
-        //before
+          //code
+      } //global interrupts are enabled in the end if they were enabled before
   }
 #+END_SRC
 
-The demo above uses C++17 but there is support to C++11, take a look at ~demo/c++11~ to see how to use.
+The demo above uses C++17 but there is support to C++11, take a look at [[file:demo/c++11][demo/c++11]] to see how to use.
 
 *** Facilities
-Simplifications are taken here to a cleaner documentation, please, open [[file:include/avr/io/functions.hpp][avr/interrupt.hpp]] to see the real prototype or declarations.
+Note, simplifications are taken into account in order to achieve a more expressive documentation, please, open [[file:include/avr/interrupt.hpp][avr/interrupt.hpp]] to see the real prototypes or declarations.
 
 **** ~void on()~
 **** ~void sei()~
-Enable the global interrupts.
+Enable global interrupts.
 
 **** ~void off()~
 **** ~void cli()~
-Disable the global interrupts.
+Disable global interrupts.
 
-**** ~atomic::atomic(Restore = Restore{})~
-[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. If the argument ~restore~ is passed to the constructor then the state of the status register is recovered in the end of the scope, which means that the global interrupts are enabled again only if they were enabled before.
+**** ~atomic::atomic(Restore = no_restore_t{})~
+[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. If the argument ~restore~ is passed to the constructor then the state of the status register is recovered in the end of the scope, which means that global interrupts are enabled again only if they were enabled before.
 
-**** AVRINT_IST(vector, ...)
+**** ~AVRINT_IST(vector, ...)~
 Macro to define ISR(Interrupt Service Routine) routines. The parameter ~vector~ is the name of the interrupt vector and the variable argument can be used to put additional attributes.
 
 *** How to use it?
-1. Check the requirements section.
-3. Add the ~include~ directory to your include path and the include patch to [[https://github.com/ricardocosme/avrIO][avrIO]](if you want to use it instead of ~avr/io.h~).
-4. Add ~#include <avr/interrupt.hpp>~ to your source and enjoy it!
+1. Add the ~include~ directory to your include path and the include patch to [[https://github.com/ricardocosme/avrIO][avrIO]](if you want to use it instead of ~avr/io.h~).
+2. Add ~#include <avr/interrupt.hpp>~ to your source and enjoy it!
 
 *** How to build the demos?
 1. If you want to build the demos with support to C++11, then go to the directory ~demo/c++11~, if you want C++20 then go to ~demo/c++20~.
 2. Inform the include path to [[https://github.com/ricardocosme/avrIO][avrIO]] if want to use it. Define the variable ~AVR_IO_INC~.
-3. Adjust at least the variables ~MCU~ in the ~Makefile~ to the appropriate values related to your microcontroller. /Note, the demos are already ready to ATtiny85./
-4. ~make~
+3. ~make~
 
 **** I'm still lost, Is there something simpler than that?
-Yes, go to the directory ~demo/c++11~ and execute the following minimal command:
+Yes, go to the directory ~demo/c++11~ and execute the following minimal command to build a single demo:
 
 ~avr-g++ -std=c++11 -Os -mmcu=attiny85 -I../../include -I$AVR_IO_INC atomic.cpp~
 
 The command above should generate a binary ~a.out~ in the current directory. Note, you should replace the argument ~attiny85~ to the appropriate value related to your microcontroller, and, the variable ~$AVR_IO_INC~ to the path to [[https://github.com/ricardocosme/avrIO][avrIO]] if you're using it.
 
 *** Requirements
-1. ~avr-gcc~ with at least ~-std=c++11~ (Tests with ~avr-gcc 10.2~)
+1. ~avr-gcc~ with at least ~-std=c++11~
 
 *** Contributions
 All type of contributions are welcome. If you like what you see and you have interest to help, don't hesitate to open a pull request or issue.
