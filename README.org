@@ -98,8 +98,9 @@ void f() {
 #+END_SRC
 ~-std=c++17 -Os  -mmcu=attiny13a~
 
-*** Requirements
+*** Requirements/Depedencies
 1. ~avr-gcc~ with at least ~-std=c++11~.
+2. [[https://github.com/ricardocosme/avrIO][avrIO]] or ~avr/io.h~ from AVR Libc.
 
 *** Contributions
 Contributions are welcome, if you like what you see and you have interest to help, don't hesitate to open a PR(pull request), a issue or contact me through my email.
