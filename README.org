@@ -54,61 +54,32 @@ Macro to define ISR(Interrupt Service Routine) routines. The parameter ~vector~ 
 
 *** Benchmark with AVR Libc
 
-**** on/off
-***** avrINT
+**** avrINT
 #+BEGIN_SRC C++
 void f() {
     avr::interrupt::on();
     avr::interrupt::off();
-}
-
-/*
-00000000 <_Z1fv>:
-   0:	78 94       	sei
-   2:	f8 94       	cli
-   4:	08 95       	ret
-*/
-#+END_SRC
-~-std=c++11 -Os  -mmcu=attiny13a~
-
-***** AVR Libc
-#+BEGIN_SRC C++
-void f() {
-    sei();
-    cli();
-}
-
-/*
-00000000 <_Z1fv>:
-   0:	78 94       	sei
-   2:	f8 94       	cli
-   4:	08 95       	ret
-*/
-}
-#+END_SRC
-~-std=c++11 -Os  -mmcu=attiny13a~
-
-**** atomic
-***** avrINT
-#+BEGIN_SRC C++
-void f() {
     avr::interrupt::atomic sa{avr::interrupt::restore};
     //code
 }
 
 /*
 00000000 <_Z1fv>:
-   0:	8f b7       	in	r24, 0x3f
+   0:	78 94       	sei
    2:	f8 94       	cli
-   4:	8f bf       	out	0x3f, r24
-   6:	08 95       	ret
+   4:	8f b7       	in	r24, 0x3f	; 63
+   6:	f8 94       	cli
+   8:	8f bf       	out	0x3f, r24	; 63
+   a:	08 95       	ret
 */
 #+END_SRC
-~-std=c++17 -Os  -mmcu=attiny13a~
+~-std=c++11 -Os  -mmcu=attiny13a~
 
-***** AVR Libc
+**** AVR Libc
 #+BEGIN_SRC C++
 void f() {
+    sei();
+    cli();
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
         //code
     }
@@ -116,10 +87,12 @@ void f() {
 
 /*
 00000000 <_Z1fv>:
-   0:	8f b7       	in	r24, 0x3f
+   0:	78 94       	sei
    2:	f8 94       	cli
-   4:	8f bf       	out	0x3f, r24
-   6:	08 95       	ret
+   4:	8f b7       	in	r24, 0x3f	; 63
+   6:	f8 94       	cli
+   8:	8f bf       	out	0x3f, r24	; 63
+   a:	08 95       	ret
 */
 }
 #+END_SRC
