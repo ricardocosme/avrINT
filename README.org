@@ -52,15 +52,81 @@ Macro to define ISR(Interrupt Service Routine) routines. The parameter ~vector~ 
 2. Inform the include path to [[https://github.com/ricardocosme/avrIO][avrIO]] if want to use it. Define the variable ~AVR_IO_INC~.
 3. ~make~
 
-**** I'm still lost, Is there something simpler than that?
-Yes, go to the directory ~demo/c++11~ and execute the following minimal command to build a single demo:
+*** Benchmark with AVR Libc
 
-~avr-g++ -std=c++11 -Os -mmcu=attiny85 -I../../include -I$AVR_IO_INC atomic.cpp~
+**** on/off
+***** avrINT
+#+BEGIN_SRC C++
+void f() {
+    avr::interrupt::on();
+    avr::interrupt::off();
+}
 
-The command above should generate a binary ~a.out~ in the current directory. Note, you should replace the argument ~attiny85~ to the appropriate value related to your microcontroller, and, the variable ~$AVR_IO_INC~ to the path to [[https://github.com/ricardocosme/avrIO][avrIO]] if you're using it.
+/*
+00000000 <_Z1fv>:
+   0:	78 94       	sei
+   2:	f8 94       	cli
+   4:	08 95       	ret
+*/
+#+END_SRC
+~-std=c++11 -Os  -mmcu=attiny13a~
+
+***** AVR Libc
+#+BEGIN_SRC C++
+void f() {
+    sei();
+    cli();
+}
+
+/*
+00000000 <_Z1fv>:
+   0:	78 94       	sei
+   2:	f8 94       	cli
+   4:	08 95       	ret
+*/
+}
+#+END_SRC
+~-std=c++11 -Os  -mmcu=attiny13a~
+
+**** atomic
+***** avrINT
+#+BEGIN_SRC C++
+void f() {
+    avr::interrupt::atomic sa{avr::interrupt::restore};
+    //code
+}
+
+/*
+00000000 <_Z1fv>:
+   0:	8f b7       	in	r24, 0x3f
+   2:	f8 94       	cli
+   4:	8f bf       	out	0x3f, r24
+   6:	08 95       	ret
+*/
+#+END_SRC
+~-std=c++17 -Os  -mmcu=attiny13a~
+
+***** AVR Libc
+#+BEGIN_SRC C++
+void f() {
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        //code
+    }
+}
+
+/*
+00000000 <_Z1fv>:
+   0:	8f b7       	in	r24, 0x3f
+   2:	f8 94       	cli
+   4:	8f bf       	out	0x3f, r24
+   6:	08 95       	ret
+*/
+}
+#+END_SRC
+~-std=c++17 -Os  -mmcu=attiny13a~
 
 *** Requirements
-1. ~avr-gcc~ with at least ~-std=c++11~
+1. ~avr-gcc~ with at least ~-std=c++11~.
 
 *** Contributions
 Contributions are welcome, if you like what you see and you have interest to help, don't hesitate to open a PR(pull request), a issue or contact me through my email.
