@@ -1,5 +1,5 @@
 ** avrINT [[https://github.com/ricardocosme/avrINT/actions?query=workflow%3A%22avr-gcc+10.2%22][https://github.com/ricardocosme/avrINT/workflows/avr-gcc%2010.2/badge.svg?branch=main]]
-C++11/17 component to use the interrupt capabilities of AVR. It can be thought as a C++ version to the C headers [[http://svn.savannah.gnu.org/viewvc/avr-libc/tags/avr-libc-2_0_0-release/include/avr/interrupt.h?revision=2516&view=markup][avr/interrupt.h]] and [[http://svn.savannah.gnu.org/viewvc/avr-libc/tags/avr-libc-2_0_0-release/include/util/atomic.h?revision=2516&view=markup][util/atomic.h]] from [[https://www.nongnu.org/avr-libc/][AVR Libc]].[[file:WHY.org][(Why?)]]
+C++11/17 facilities to use the interrupt capabilities of AVR. It can be thought as a C++ version to the C headers [[http://svn.savannah.gnu.org/viewvc/avr-libc/tags/avr-libc-2_0_0-release/include/avr/interrupt.h?revision=2516&view=markup][avr/interrupt.h]] and [[http://svn.savannah.gnu.org/viewvc/avr-libc/tags/avr-libc-2_0_0-release/include/util/atomic.h?revision=2516&view=markup][util/atomic.h]] from [[https://www.nongnu.org/avr-libc/][AVR Libc]].[[file:why.org][(Why?)]]
 
 **** Demo
 
@@ -15,12 +15,12 @@ C++11/17 component to use the interrupt capabilities of AVR. It can be thought a
       { //scope with code executed without being disturbed by interrupts
           atomic sa;
           //code
-      } //global interrupts are always enabled in the end
+      } //global interrupts are always enabled at the end
 
       {
           atomic sa{restore};
           //code
-      } //global interrupts are enabled in the end if they were enabled before
+      } //global interrupts are enabled at the end if they were enabled before
   }
 #+END_SRC
 
@@ -37,8 +37,13 @@ Enable global interrupts.
 **** ~void cli()~
 Disable global interrupts.
 
-**** ~atomic::atomic(Restore = no_restore_t{})~
-[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. If the argument ~restore~ is passed to the constructor then the state of the status register is recovered in the end of the scope, which means that global interrupts are enabled again only if they were enabled before.
+**** ~template<typename AtTheEnd> atomic::atomic(AtTheEnd = on_at_the_end{})~
+[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. If the argument ~restore~ is passed to the constructor then the state of the status register is recovered at the end of the scope, which means that global interrupts are enabled again only if they were enabled before. The default is the policy ~on_at_the_end~ that always enables the global interrupts at the end of the scope.
+
+Note, the compiler optimizer can reorder the code around the atomic scope that doesn't have any observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]] if timing is a critical factor.
+
+**** ~template<typename T> void clobber(T& v)~
+It says that the lvalue ~v~ has an observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]].
 
 **** ~AVRINT_IST(vector, ...)~
 Macro to define ISR(Interrupt Service Routine) routines. The parameter ~vector~ is the name of the interrupt vector and the variable argument can be used to put additional attributes.

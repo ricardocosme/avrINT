@@ -42,27 +42,41 @@ namespace avr { namespace interrupt {
 [[gnu::always_inline]] inline void cli() noexcept
 { off(); }
 
+inline void clobber() {}
+
+template<typename T, typename... Rest>
+[[gnu::always_inline]] inline void clobber(T& v, Rest&... rest) {
+    asm volatile("" : "+g"(v) : : "memory");
+    clobber(rest...);
+}
+
+template<typename T, typename... Rest>
+[[gnu::always_inline]] inline void clobber(const T& v, Rest&... rest) {
+    asm("" : : "g"(v) : "memory");
+    clobber(rest...);
+}
+
 /** Tag to be used as a parameter to the constructor of the class
  * 'atomic'. It informs that the status register state should be
- * recovered in the end of the atomic scope. */
+ * recovered at the end of the atomic scope. */
 struct restore_t{};
 
-namespace detail{
-struct no_restore_t{};
-} //namespace detail
+/** Tag to be used as a parameter to the constructor of the class
+ * 'atomic'. It informs that the global interrupts must always be
+ * enabled at the end of the scope. */
+struct on_at_the_end_t{};
 
 /** RAII to execute code without being disturbed by interrupts 
     
-    By default the global interrupts are enabled in the end of the
+    By default the global interrupts are enabled at the end of the
     scope, but if the parameter 'restore' is passed to the constructor
-    then the status register state that was before the atomic scope is
-    recovered, which means that the global interrupts is enabled only
-    if they were enabled before.
+    then the state of the status register that was before the atomic
+    scope is recovered, which means that the global interrupts are
+    enabled only if they were enabled before.
 
     Example:
-
       {
-        atomic sa;
+        atomic sa; //same as 'atomic sa(on_at_the_end)'
         //my code
       }
    
@@ -70,15 +84,28 @@ struct no_restore_t{};
         atomic sa(restore);
         //my code
       }
+
+    Note, the compiler optimizer can reorder instructions around the
+    atomic scope when that instructions doesn't have observable side
+    effects. Take a look at 'reordering_code.org' to know more about
+    it.
+
+    [optional] clobbers: list of lvalues that can have an observable
+    side effect. This should only be used to do fine adjustments in
+    the generated code in order to move to the outside of the atomic
+    section some code that does't need to be there and, first of
+    all, when the timing is a critical factor.
 */
-template<typename Restore = detail::no_restore_t>
+template<typename AtTheEnd = on_at_the_end_t>
 class atomic {
     uint8_t _sreg;
 public:
     constexpr static bool is_restore
-        {detail::is_same<Restore, restore_t>::value};
-    
-    explicit atomic(Restore = Restore{}) noexcept {
+        {detail::is_same<AtTheEnd, restore_t>::value};
+
+    template<typename... Clobbers>
+    explicit atomic(AtTheEnd = AtTheEnd{}, Clobbers&... clobbers) noexcept {
+        clobber(clobbers...);
         if(is_restore) _sreg = io::sreg;
         off();
     }
@@ -91,17 +118,19 @@ public:
 
 #if __cplusplus >= 201703L
 inline constexpr restore_t restore;
+inline constexpr on_at_the_end_t on_at_the_end;
 #else
 namespace {
 constexpr auto& restore{detail::global<restore_t>::instance};
+constexpr auto& on_at_the_end{detail::global<on_at_the_end_t>::instance};
 }//anonymous namespace
 #endif
 
 /** [C++11/14] The atomic ctor should be use if C++17 is available. */
-template<typename Restore = detail::no_restore_t>
+template<typename AtTheEnd = on_at_the_end_t>
 [[gnu::always_inline, nodiscard]]
-inline atomic<Restore> make_atomic(Restore = Restore{}) noexcept
-{ return atomic<Restore>{}; }
+inline atomic<AtTheEnd> make_atomic(AtTheEnd = AtTheEnd{}) noexcept
+{ return atomic<AtTheEnd>{}; }
 
 /** Defines an ISR(Interrupt Service Routine)
     

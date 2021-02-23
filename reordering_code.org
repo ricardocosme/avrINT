@@ -1,0 +1,69 @@
+** Reordering code
+The compiler optimizer can reorder the instructions around the atomic scope that doesn't have any observable side effect. Memory accesses using the ~volatile~ qualifier can't be reordered around the scope because the instructions to enable and disable the interrupts are using memory barriers to avoid this. Actually, a statement that the compiler can't guarantee that there isn't any observable side effect can't be reordered and this great news here, but this is a tricky issue when timing is a critical factor. Some instructions can be moved to the atomic section and the period of time that the interrupts are disabled can be longer than the programmer thinks. In this case the generated code can be manually analyzed and the function ~clobber()~ or the optional list ~clobbers~ of the atomic's constructor can be used to achieve a better outcome with a more efficient code.
+
+Let's consider the function below that was used by [[https://www.mikrocontroller.net/topic/65923][Peter Dannegger]] to show the problem(/the cli() and sei() calls were replaced by avr::interrupt::atomic/):
+#+BEGIN_SRC C++
+using namespace avr::interrupt;
+unsigned int ivar;
+void f(unsigned int val) {
+  val = 65535U / val;
+  atomic sa;
+  ivar = val;
+}
+#+END_SRC
+
+Using ~avr-gcc 10.2~ with ~-Os~ we have the following to ATtiny13a:
+#+BEGIN_SRC
+movw	r22, r24
+cli
+ldi	r24, 0xFF	; 255
+ldi	r25, 0xFF	; 255
+rcall	.+18		; 0x4e <__udivmodhi4>
+sts	0x0061, r23	; 0x800061 <ivar+0x1>
+sts	0x0060, r22	; 0x800060 <ivar>
+sei
+ret
+#+END_SRC
+
+Note that the call to ~__udivmodhi4~ is inside the critical section, in other words, it's between the instructions ~cli~ and ~sei~. This is something undesirable when we are worried about the period of time that interrupts are disabled. The optimizer doesn't know that timing is an observable side effect here. We don't want to pay the cost of execute the division function inside the critical region but the compiler knows that we are calling this function with an automatic object(~val~) as one of the operands, and there isn't any observable side effect related to it, it's something local to ~f~. If the division occurs before or after the ~cli~ instruction, the result applied to ~ival~ doesn't change, the net effect of the operation is the same. But, we can tell to the optimizer that the lvalue ~val~ has an observable side effect that is observed by the ~cli~ instruction when a memory barrier is established:
+
+#+BEGIN_SRC C++
+using namespace avr::interrupt;
+unsigned int ivar;
+void f(unsigned int val) {
+  val = 65535U / val;
+  clobber(val);
+  atomic sa;
+  ivar = val;
+}
+#+END_SRC
+
+Note that division is moved before the ~cli~:
+#+BEGIN_SRC
+movw	r22, r24
+ldi	r24, 0xFF	; 255
+ldi	r25, 0xFF	; 255
+rcall	.+20		; 0x4e <__udivmodhi4>
+cli
+sts	0x0061, r23	; 0x800061 <ivar+0x1>
+sts	0x0060, r22	; 0x800060 <ivar>
+sei
+ret
+#+END_SRC
+
+We can write something maybe more concise:
+#+BEGIN_SRC C++
+using namespace avr::interrupt;
+unsigned int ivar;
+void f(unsigned int val) {
+  val = 65535U / val;
+  atomic sa(on_at_the_end, val);
+  ivar = val;
+}
+#+END_SRC
+
+A good explanation about the topic is: [[https://www.nongnu.org/avr-libc/user-manual/optimization.html][Problems with reordering code(Jan Waclawek)]].
+
+We are talking about something very subtle here, don't try to assume things to use ~clobber()~ before a careful examination of the generated code in conjunction with timing requirements. 
+
+[[https://github.com/ricardocosme/avrINT][Go back to README.org]]

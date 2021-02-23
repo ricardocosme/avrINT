@@ -9,8 +9,8 @@ ATOMIC_BLOCK(ATOMIC_FORCEON) {
   //code
 }
 #+END_SRC
-Using RAII we have a compile error with a message like this: /error: break statement not within loop or switch/.
+Using RAII we have a compiler error with a message like this: /error: break statement not within loop or switch/.
 
-Other macros functions like ~cli()~ and ~sei()~ can be replaced by ~always_inline~ functions located inside a meaningful namespace like ~avr::interrupt~. Actually, macros without qualified names it's not a good idea at all, but it can be acceptable in small contexts. Bugs because of collision with macros can be indeed one of the most nastiest to solve.
+Other macros functions like ~cli()~ and ~sei()~ can be replaced by ~always_inline~ functions located inside a meaningful namespace like ~avr::interrupt~. Actually, macros without qualified names it isn't a good idea at all, but it can be acceptable in small contexts. Bugs because of collision with macros can indeed be one of the most nastiest to solve.
 
 [[https://github.com/ricardocosme/avrINT][Go back to README.org]]
