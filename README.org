@@ -13,18 +13,18 @@ C++11/17 facilities to use the interrupt capabilities of AVR. It can be thought 
       off(); //disable global interrupts
 
       { //scope with code executed without being disturbed by interrupts
-          atomic sa;
+          atomic s;
           //code
-      } //global interrupts are always enabled at the end
+      } //interrupts are enabled at the end if they were enabled before
 
       {
-          atomic sa{restore};
+          atomic s{on_at_the_end};
           //code
-      } //global interrupts are enabled at the end if they were enabled before
+      } //interrupts are always enabled at the end
   }
 #+END_SRC
 
-The demo above uses C++17 but there is support to C++11, take a look at [[file:demo/c++11][demo/c++11]] to see how to use.
+The demo above uses C++17 but there is support to C++11, take a look at [[file:demo/c++11][demo/c++11]].
 
 *** Facilities
 Note, simplifications are taken into account in order to achieve a more expressive documentation, please, open [[file:include/avr/interrupt.hpp][avr/interrupt.hpp]] to see the real prototypes or declarations.
@@ -37,12 +37,12 @@ Enable global interrupts.
 **** ~void cli()~
 Disable global interrupts.
 
-**** ~template<typename AtTheEnd> atomic::atomic(AtTheEnd = on_at_the_end{})~
-[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. If the argument ~restore~ is passed to the constructor then the state of the status register is recovered at the end of the scope, which means that global interrupts are enabled again only if they were enabled before. The default is the policy ~on_at_the_end~ that always enables the global interrupts at the end of the scope.
+**** ~template<typename AtTheEnd> atomic::atomic(AtTheEnd = restore{})~
+[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. By default the state of the status register is recovered at the end of the scope, which means that global interrupts are enabled again only if they were enabled before. If the argument ~on_at_the_end~ is passed to the constructor then the global interrupts are always enabled at the end of the scope.
 
 Note, the compiler optimizer can reorder the code around the atomic scope that doesn't have any observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]] if timing is a critical factor.
 
-**** ~template<typename T> void clobber(T& v)~
+**** ~template<typename T> void clobber(const T& v)~
 It says that the lvalue ~v~ has an observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]].
 
 **** ~AVRINT_IST(vector, ...)~
@@ -64,7 +64,7 @@ Macro to define ISR(Interrupt Service Routine) routines. The parameter ~vector~ 
 void f() {
     avr::interrupt::on();
     avr::interrupt::off();
-    avr::interrupt::atomic sa{avr::interrupt::restore};
+    avr::interrupt::atomic s;
     //code
 }
 

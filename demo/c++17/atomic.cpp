@@ -6,16 +6,16 @@ int main() {
     on();
     off();
     {
-        atomic sa;
+        atomic s;
+        /** the code in this scope will be executed without being
+         *  disturbed by interrupts. The interrups are enabled at the end
+         *  of the scope only if they were enabled before. 
+         */
     }
     {
-        atomic sa{restore};
+        atomic s{on_at_the_end};
+        /** As above but interrupts are always enabled at the end of
+         *  the scope.
+         */
     }
-    
-    /** the code in this scope will be executed without being
-     *  disturbed by interrupts. The interrups are enabled at the end
-     *  of the scope. Take a look at 'atomic_restore.cpp' to see a
-     *  solution that restore the state before the usage of the atomic
-     *  in the end of the scope.
-     */
 }

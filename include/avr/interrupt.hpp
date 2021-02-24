@@ -45,12 +45,6 @@ namespace avr { namespace interrupt {
 inline void clobber() {}
 
 template<typename T, typename... Rest>
-[[gnu::always_inline]] inline void clobber(T& v, Rest&... rest) {
-    asm volatile("" : "+g"(v) : : "memory");
-    clobber(rest...);
-}
-
-template<typename T, typename... Rest>
 [[gnu::always_inline]] inline void clobber(const T& v, Rest&... rest) {
     asm("" : : "g"(v) : "memory");
     clobber(rest...);
@@ -68,20 +62,20 @@ struct on_at_the_end_t{};
 
 /** RAII to execute code without being disturbed by interrupts 
     
-    By default the global interrupts are enabled at the end of the
-    scope, but if the parameter 'restore' is passed to the constructor
-    then the state of the status register that was before the atomic
-    scope is recovered, which means that the global interrupts are
-    enabled only if they were enabled before.
+    By default the state of the status register that was before the
+    atomic scope is recovered at the end of the scope, which means
+    that interrupts are enabled only if they were enabled before. If
+    the argument 'on_at_the_end' is passed then the interrupts are
+    always enabled at the end of the scope.
 
     Example:
       {
-        atomic sa; //same as 'atomic sa(on_at_the_end)'
+        atomic sa; //same as 'atomic sa(restore)'
         //my code
       }
    
       {
-        atomic sa(restore);
+        atomic sa(on_at_the_end);
         //my code
       }
 
@@ -96,7 +90,7 @@ struct on_at_the_end_t{};
     section some code that does't need to be there and, first of
     all, when the timing is a critical factor.
 */
-template<typename AtTheEnd = on_at_the_end_t>
+template<typename AtTheEnd = restore_t>
 class atomic {
     uint8_t _sreg;
 public:
@@ -127,7 +121,7 @@ constexpr auto& on_at_the_end{detail::global<on_at_the_end_t>::instance};
 #endif
 
 /** [C++11/14] The atomic ctor should be use if C++17 is available. */
-template<typename AtTheEnd = on_at_the_end_t>
+template<typename AtTheEnd = restore_t>
 [[gnu::always_inline, nodiscard]]
 inline atomic<AtTheEnd> make_atomic(AtTheEnd = AtTheEnd{}) noexcept
 { return atomic<AtTheEnd>{}; }

@@ -1,7 +1,7 @@
 ** Why this exist?
 There isn't nothing wrong or missing with the C headers [[http://svn.savannah.gnu.org/viewvc/avr-libc/tags/avr-libc-2_0_0-release/include/avr/interrupt.h?revision=2516&view=markup][avr/interrupt.h]] and [[http://svn.savannah.gnu.org/viewvc/avr-libc/tags/avr-libc-2_0_0-release/include/util/atomic.h?revision=2516&view=markup][util/atomic.h]], you can use them in your C++ project with success, but we are in C++ land here.
 
-We have in our language a popular and old programming idiom called [[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII(Resource Acquisition Is Initialization)]] that nicely solves the need for a special scope to execute some code without being disturbed by interrupts. The AVR Libc says that this is a "/code block to be executed atomically/", and the library implements the feature using a clever solution with a for loop and the ~cleanup~ GCC attribute. The usage is through the macros ~ATOMIC_BLOCK~, ~ATOMIC_FORCEON~ and ~ATOMIC_RESTORESTATE~. In C++ we have constructors and destructors to implement RAII without any macro. The following snippet that doesn't even make sense is compiled with success:
+We have in our language a popular and old programming idiom called [[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII(Resource Acquisition Is Initialization)]] that nicely solves the need for a special scope to execute some code without being disturbed by interrupts. The AVR Libc says that this is a "/code block to be executed atomically/", and the library implements the feature using a clever solution with a for loop and the ~cleanup~ GCC attribute. The usage is through the macros ~ATOMIC_BLOCK~, ~ATOMIC_FORCEON~ and ~ATOMIC_RESTORESTATE~. In C++ we have constructors and destructors to implement RAII without any macro. The following snippet that doesn't even make compiles with success:
 #+BEGIN_SRC
 ATOMIC_BLOCK(ATOMIC_FORCEON) {
   //code
@@ -11,6 +11,6 @@ ATOMIC_BLOCK(ATOMIC_FORCEON) {
 #+END_SRC
 Using RAII we have a compiler error with a message like this: /error: break statement not within loop or switch/.
 
-Other macros functions like ~cli()~ and ~sei()~ can be replaced by ~always_inline~ functions located inside a meaningful namespace like ~avr::interrupt~. Actually, macros without qualified names it isn't a good idea at all, but it can be acceptable in small contexts. Bugs because of collision with macros can indeed be one of the most nastiest to solve.
+Other macros functions like ~cli()~ and ~sei()~ can be replaced by ~always_inline~ functions located inside a meaningful namespace like ~avr::interrupt~. Actually, macros without qualified names isn't a good idea at all, but it can be acceptable in small contexts. Bugs because of collision with macros can indeed be one of the most nastiest to solve.
 
 [[https://github.com/ricardocosme/avrINT][Go back to README.org]]

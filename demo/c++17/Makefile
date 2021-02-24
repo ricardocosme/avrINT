@@ -1,4 +1,4 @@
 STD_CXX=c++17
-demos=atomic atomic_restore
+demos=atomic 
 
 include ../common.mk
