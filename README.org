@@ -57,7 +57,7 @@ Macro to define ISR(Interrupt Service Routine) routines. The parameter ~vector~ 
 2. Inform the include path to [[https://github.com/ricardocosme/avrIO][avrIO]] if you want to use it defining the variable ~AVR_IO_INC~.
 3. ~make~
 
-*** Benchmark with AVR Libc
+*** Benchmark against AVR Libc
 
 **** avrINT
 #+BEGIN_SRC C++
