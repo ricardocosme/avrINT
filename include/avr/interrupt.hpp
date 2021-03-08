@@ -137,3 +137,5 @@ extern "C" \
 [[gnu::signal, gnu::used, gnu::externally_visible, __VA_ARGS__]] void vector()
 
 }}
+
+#include "avr/interrupt/mcu.hpp"
