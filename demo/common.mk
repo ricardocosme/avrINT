@@ -2,7 +2,7 @@ MCU=attiny85
 AVRDUDE_DEVICE=t85
 F_CPU=1000000
 OPTIMIZE=-Os
-AVR_IO_INC=../../avrIO/include
+AVR_IO_INC=../../../avrIO/include
 
 CXX=avr-g++
 CC=avr-gcc
