@@ -21,12 +21,22 @@ C++11/17 facilities to use the interrupt capabilities of AVR. It can be thought 
           atomic s{on_at_the_end};
           //code
       } //interrupts are always enabled at the end
+
+      { //scope with code executed with interruptions turned on
+          interruptible s;
+          //code
+      } //interrupts are disabled at the end if they were disabled before
+
+      {
+          interruptible s{off_at_the_end};
+          //code
+      } //interrupts are always disabled at the end
   }
 #+END_SRC
 
 The demo above uses C++17 but there is support to C++11, take a look at [[file:demo/c++11][demo/c++11]].
 
-*** Facilities
+*** API
 Note, simplifications are taken into account in order to achieve a more expressive documentation, please, open [[file:include/avr/interrupt.hpp][avr/interrupt.hpp]] to see the real prototypes or declarations.
 
 **** ~void on()~
@@ -39,6 +49,11 @@ Disable global interrupts.
 
 **** ~template<typename AtTheEnd> atomic::atomic(AtTheEnd = restore{})~
 [[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. By default the state of the status register is recovered at the end of the scope, which means that global interrupts are enabled again only if they were enabled before. If the argument ~on_at_the_end~ is passed to the constructor then the global interrupts are always enabled at the end of the scope.
+
+Note, the compiler optimizer can reorder the code around the atomic scope that doesn't have any observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]] if timing is a critical factor.
+
+**** ~template<typename AtTheEnd> interruptible::interruptible(AtTheEnd = restore{})~
+[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code with interruptions turned on. By default the state of the status register is recovered at the end of the scope, which means that global interrupts are disable again only if they were disabled before. If the argument ~off_at_the_end~ is passed to the constructor then the global interrupts are always disabled at the end of the scope.
 
 Note, the compiler optimizer can reorder the code around the atomic scope that doesn't have any observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]] if timing is a critical factor.
 
