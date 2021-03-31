@@ -51,14 +51,20 @@ template<typename T, typename... Rest>
 }
 
 /** Tag to be used as a parameter to the constructor of the class
- * 'atomic'. It informs that the status register state should be
- * recovered at the end of the atomic scope. */
+    'atomic'. It informs that the status register state should be
+    recovered at the end of the atomic scope. */
 struct restore_t{};
 
 /** Tag to be used as a parameter to the constructor of the class
- * 'atomic'. It informs that the global interrupts must always be
- * enabled at the end of the scope. */
+    'atomic'. It informs that the global interrupts must always be
+    enabled at the end of the scope. */
 struct on_at_the_end_t{};
+
+
+/** Tag to be used as a parameter to the constructor of the class
+    'interruptible'. It informs that the global interrupts must always
+    be disabled at the end of the scope. */
+struct off_at_the_end_t{};
 
 /** RAII to execute code without being disturbed by interrupts 
     
@@ -93,6 +99,9 @@ struct on_at_the_end_t{};
 template<typename AtTheEnd = restore_t>
 class atomic {
     uint8_t _sreg;
+    static_assert(!detail::is_same<AtTheEnd, off_at_the_end_t>::value,
+                  "It isn't allowed the policy 'off_at_the_end' to use "
+                  "'atomic' because it doesn't make sense.");
 public:
     constexpr static bool is_restore
         {detail::is_same<AtTheEnd, restore_t>::value};
@@ -109,11 +118,6 @@ public:
         else on();
     }
 };
-
-/** Tag to be used as a parameter to the constructor of the class
- * 'interruptible'. It informs that the global interrupts must always
- * be disabled at the end of the scope. */
-struct off_at_the_end_t{};
 
 /** RAII to turn on interruptions in the beginning and restore SREG
     state or turn off at the end.
@@ -149,6 +153,9 @@ struct off_at_the_end_t{};
 template<typename AtTheEnd = restore_t>
 class interruptible {
     uint8_t _sreg;
+    static_assert(!detail::is_same<AtTheEnd, on_at_the_end_t>::value,
+                  "It isn't allowed the policy 'on_at_the_end' to use "
+                  "'interruptible' because it doesn't make sense.");
 public:
     constexpr static bool is_restore
         {detail::is_same<AtTheEnd, restore_t>::value};
