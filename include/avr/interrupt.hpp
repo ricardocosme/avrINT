@@ -70,9 +70,9 @@ struct off_at_the_end_t{};
     
     By default the state of the status register that was before the
     atomic scope is recovered at the end of the scope, which means
-    that interruptions are enabled only if they were enabled
+    that interrupts are enabled only if they were enabled
     before. If the argument 'on_at_the_end' is passed then the
-    interruptions are always enabled at the end of the scope.
+    interrupts are always enabled at the end of the scope.
 
     Example:
       {
@@ -119,14 +119,14 @@ public:
     }
 };
 
-/** RAII to turn on interruptions in the beginning and restore SREG
-    state or turn off at the end.
+/** RAII to enable interrupts in the beginning and restore SREG state
+    or disable at the end.
     
     By default the state of the status register that was before the
     interruptible scope is recovered at the end of the scope, which
-    means that interruptions are disabled only if they were disabled
+    means that interrupts are disabled only if they were disabled
     before. If the argument 'off_at_the_end' is passed then the
-    interruptions are always disabled at the end of the scope.
+    interrupts are always disabled at the end of the scope.
 
     Example:
       {
@@ -184,18 +184,6 @@ constexpr auto& on_at_the_end{detail::global<on_at_the_end_t>::instance};
 constexpr auto& off_at_the_end{detail::global<off_at_the_end_t>::instance};
 }//anonymous namespace
 #endif
-
-/** [C++11/14] The atomic ctor should be use if C++17 is available. */
-template<typename AtTheEnd = restore_t>
-[[gnu::always_inline, nodiscard]]
-inline atomic<AtTheEnd> make_atomic(AtTheEnd = AtTheEnd{}) noexcept
-{ return atomic<AtTheEnd>{}; }
-
-/** [C++11/14] The interruptinle ctor should be use if C++17 is available. */
-template<typename AtTheEnd = restore_t>
-[[gnu::always_inline, nodiscard]]
-inline interruptible<AtTheEnd> make_interruptible(AtTheEnd = AtTheEnd{}) noexcept
-{ return interruptible<AtTheEnd>{}; }
 
 /** Defines an ISR(Interrupt Service Routine)
     

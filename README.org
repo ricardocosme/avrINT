@@ -22,7 +22,7 @@ C++11/17 facilities to use the interrupt capabilities of AVR. It can be thought 
           //code
       } //interrupts are always enabled at the end
 
-      { //scope with code executed with interruptions turned on
+      { //scope with code executed with interrupts enabled
           interruptible s;
           //code
       } //interrupts are disabled at the end if they were disabled before
@@ -34,7 +34,7 @@ C++11/17 facilities to use the interrupt capabilities of AVR. It can be thought 
   }
 #+END_SRC
 
-The demo above uses C++17 but there is support to C++11, take a look at [[file:demo/c++11][demo/c++11]].
+The demo above uses C++17 but C++11 can also be used, take a look at [[file:demo/atomic.cpp][demo/atomic.cpp]] or [[file:demo/interruptible.cpp][demo/interruptible.cpp]] to see how.
 
 *** API
 Note, simplifications are taken into account in order to achieve a more expressive documentation, please, open [[file:include/avr/interrupt.hpp][avr/interrupt.hpp]] to see the real prototypes or declarations.
@@ -48,29 +48,26 @@ Enable global interrupts.
 Disable global interrupts.
 
 **** ~template<typename AtTheEnd> atomic::atomic(AtTheEnd = restore{})~
-[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. By default the state of the status register is recovered at the end of the scope, which means that global interrupts are enabled again only if they were enabled before. If the argument ~on_at_the_end~ is passed to the constructor then the global interrupts are always enabled at the end of the scope.
+[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code without being disturbed by interrupts. By default the state of the status register is recovered at the end of the scope, which means that global interrupts are enabled again only if they were enabled before. If the argument ~on_at_the_end~ is passed to the constructor then global interrupts are always enabled at the end of the scope.
 
 Note, the compiler optimizer can reorder the code around the atomic scope that doesn't have any observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]] if timing is a critical factor.
 
 **** ~template<typename AtTheEnd> interruptible::interruptible(AtTheEnd = restore{})~
-[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code with interruptions turned on. By default the state of the status register is recovered at the end of the scope, which means that global interrupts are disable again only if they were disabled before. If the argument ~off_at_the_end~ is passed to the constructor then the global interrupts are always disabled at the end of the scope.
+[[https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization][RAII]] to execute code with interrupts enabled. By default the state of the status register is recovered at the end of the scope, which means that global interrupts are disabled again only if they were disabled before. If the argument ~off_at_the_end~ is passed to the constructor then global interrupts are always disabled at the end of the scope.
 
 Note, the compiler optimizer can reorder the code around the atomic scope that doesn't have any observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]] if timing is a critical factor.
 
 **** ~template<typename T> void clobber(const T& v)~
-It says that the lvalue ~v~ has an observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]].
+It communicates to the compiler that the lvalue ~v~ has an observable side effect. Take a look at [[file:reordering_code.org][reordering_code.org]].
 
 **** ~AVRINT_IST(vector, ...)~
 Macro to define ISR(Interrupt Service Routine) routines. The parameter ~vector~ is the name of the interrupt vector and the variable argument can be used to put additional attributes.
 
+For each interrupt there is a short macro using the form ~AVRINT_<name_of_the_interrupt>(...)~. The ~<name_of_the_interrupt>~ is the one defined by the datasheet and sometimes there is a more extensive version with a more expressive name, for example, considering an ~ATtiny13A~ there is the macro ~AVRINT_TIM0_OVF(...)~ but there is also the alias ~AVRINT_TIMER_OVERFLOW(...)~.
+
 *** How to use it?
 1. Add the ~include~ directory to your include path and the include patch to [[https://github.com/ricardocosme/avrIO][avrIO]](if you want to use it instead of ~avr/io.h~).
 2. Add ~#include <avr/interrupt.hpp>~ to your source and enjoy it!
-
-*** How to build the demos?
-1. If you want to build the demos with support to C++11, then go to the directory ~demo/c++11~, if you want C++17 then go to ~demo/c++17~.
-2. Inform the include path to [[https://github.com/ricardocosme/avrIO][avrIO]] if you want to use it defining the variable ~AVR_IO_INC~.
-3. ~make~
 
 *** Benchmark against AVR Libc
 
