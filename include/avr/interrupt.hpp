@@ -98,13 +98,13 @@ public:
         {detail::is_same<AtTheEnd, restore_t>::value};
 
     template<typename... Clobbers>
-    explicit atomic(AtTheEnd = AtTheEnd{}, Clobbers&... clobbers) noexcept {
+    explicit atomic(AtTheEnd = AtTheEnd{}, Clobbers&... clobbers) {
         clobber(clobbers...);
         if(is_restore) _sreg = io::sreg;
         off();
     }
     
-    ~atomic() noexcept {
+    ~atomic() {
         if(is_restore) io::sreg = _sreg;
         else on();
     }
@@ -154,13 +154,13 @@ public:
         {detail::is_same<AtTheEnd, restore_t>::value};
 
     template<typename... Clobbers>
-    explicit interruptible(AtTheEnd = AtTheEnd{}, Clobbers&... clobbers) noexcept {
+    explicit interruptible(AtTheEnd = AtTheEnd{}, Clobbers&... clobbers) {
         clobber(clobbers...);
         if(is_restore) _sreg = io::sreg;
         on();
     }
     
-    ~interruptible() noexcept {
+    ~interruptible() {
         if(is_restore) io::sreg = _sreg;
         else off();
     }
